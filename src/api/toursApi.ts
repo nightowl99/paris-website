@@ -1,10 +1,10 @@
 import axios from 'axios';
 import Papa from 'papaparse';
-import { TourType } from '../types';
 
 // Function to fetch and parse the CSV data
 export const fetchTours = async (): Promise<TourType[]> => {
   try {
+    console.log('Fetching tours from Supabase');
     const response = await axios.get(
       `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/tours`,
       {
@@ -20,23 +20,31 @@ export const fetchTours = async (): Promise<TourType[]> => {
         complete: (results) => {
           // Transform the parsed data into our TourType format
           const tours: TourType[] = results.data
-            .filter((item: any) => item.name && item.id)
-            .map((item: any, index: number) => ({
-              id: item.id || `tour-${index}`,
-              name: item.name || 'Paris Tour',
-              description: item.description || 'Experience the beauty of Paris with this amazing tour.',
-              duration: item.duration || '3 hours',
-              price: parseFloat(item.price) || 99.99,
-              currency: item.currency || 'EUR',
-              image: item.image || `https://source.unsplash.com/random/800x600/?paris,${index}`,
-              rating: parseFloat(item.rating) || 4.5,
-              reviews: parseInt(item.reviews) || 87,
-              category: item.category || 'Sightseeing',
-              location: item.location || 'Paris, France',
-              bookingLink: item.booking_link || '#',
-              highlights: (item.highlights || 'Skip the line;Expert guide;Small group').split(';'),
-              inclusions: (item.inclusions || 'Guide;Entrance fees').split(';'),
-              exclusions: (item.exclusions || 'Hotel pickup;Food and drinks').split(';'),
+            .filter((item: any) => item.Id && item.Name) // Ensure required fields exist
+            .map((item: any) => ({
+              id: item.Id,
+              name: item.Name,
+              category: item.Category || 'Uncategorized',
+              sku: item.SKU || '',
+              status: item.Status || 'active',
+              price: parseFloat(item.Price) || 0,
+              retailPrice: parseFloat(item['Retail Price']) || 0,
+              thumbnail: item.Thumbnail || '',
+              commission: parseFloat(item.commission) || 0,
+              url: item.URL || '',
+              description: item.Description || '',
+              image: item.Image || item.Thumbnail || '', // Fallback to thumbnail if image is missing
+              merchant: item.merchant || '',
+              // Keep existing fields that might be used in the UI
+              duration: '2-3 hours', // Default value
+              currency: 'EUR',
+              rating: 4.5,
+              reviews: 0,
+              location: 'Paris, France',
+              bookingLink: item.URL || '#',
+              highlights: ['Skip the line', 'Expert guide', 'Small group'],
+              inclusions: ['Guide', 'Entrance fees'],
+              exclusions: ['Hotel pickup', 'Food and drinks']
             }));
           
           resolve(tours);
@@ -48,14 +56,41 @@ export const fetchTours = async (): Promise<TourType[]> => {
     });
   } catch (error) {
     console.error('Error fetching tour data:', error);
-    
-    // Return mock data if the CSV fetch fails
     return getMockTours();
+  } finally {
+    console.log('Fetching tours from Supabase completed');
   }
 };
 
+// Update TourType to match the new structure
+export type TourType = {
+  id: string;
+  name: string;
+  category: string;
+  sku: string;
+  status: string;
+  price: number;
+  retailPrice: number;
+  thumbnail: string;
+  commission: number;
+  url: string;
+  description: string;
+  image: string;
+  merchant: string;
+  // Additional UI fields
+  duration: string;
+  currency: string;
+  rating: number;
+  reviews: number;
+  location: string;
+  bookingLink: string;
+  highlights: string[];
+  inclusions: string[];
+  exclusions: string[];
+};
+
 // Mock data as fallback
-const getMockTours = (): TourType[] => {
+const getMockTours = (): any[] => {
   return [
     {
       id: 'tour-1',
