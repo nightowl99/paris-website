@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { fetchTours, PaginatedTours, TourType } from '../api/toursApi';
+import { fetchTours, TourType } from '../api/toursApi';
 
 interface UseToursOptions {
   page?: number;

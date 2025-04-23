@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { TourType } from '../types';
 import TourCard from './TourCard';
 import { ChevronRight } from 'lucide-react';
 import { useFeaturedTours } from '../hooks/useTours';
