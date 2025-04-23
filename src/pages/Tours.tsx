@@ -1,81 +1,49 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { fetchTours } from '../api/toursApi';
-import { TourType } from '../types';
 import TourCard from '../components/TourCard';
 import HeroSection from '../components/HeroSection';
-import { Filter, ChevronDown } from 'lucide-react';
+import { Filter, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useTours } from '../hooks/useTours';
 
 const Tours: React.FC = () => {
   const [searchParams] = useSearchParams();
   const searchTerm = searchParams.get('search') || '';
   
-  const [tours, setTours] = useState<TourType[]>([]);
-  const [filteredTours, setFilteredTours] = useState<TourType[]>([]);
-  const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('popularity');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
   const [showFilters, setShowFilters] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 12;
 
-  useEffect(() => {
-    const loadTours = async () => {
-      try {
-        const data = await fetchTours();
-        setTours(data);
-        setFilteredTours(data);
-      } catch (error) {
-        console.error('Error loading tours:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadTours();
-  }, []);
-
-  useEffect(() => {
-    let result = [...tours];
-    
-    // Filter by search term
-    if (searchTerm) {
-      result = result.filter(tour => 
-        tour.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        tour.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        tour.category.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-    
-    // Filter by category
-    if (activeCategory !== 'all') {
-      result = result.filter(tour => tour.category === activeCategory);
-    }
-    
-    // Filter by price range
-    result = result.filter(tour => 
-      tour.price >= priceRange[0] && tour.price <= priceRange[1]
-    );
-    
-    // Sort tours
-    switch (sortBy) {
-      case 'price-low':
-        result.sort((a, b) => a.price - b.price);
-        break;
-      case 'price-high':
-        result.sort((a, b) => b.price - a.price);
-        break;
-      case 'rating':
-        result.sort((a, b) => b.rating - a.rating);
-        break;
-      default: // popularity (reviews)
-        result.sort((a, b) => b.reviews - a.reviews);
-    }
-    
-    setFilteredTours(result);
-  }, [tours, searchTerm, activeCategory, sortBy, priceRange]);
+  const { toursData, loading, error } = useTours({
+    page: currentPage,
+    pageSize,
+    category: activeCategory !== 'all' ? activeCategory : undefined,
+    sortBy,
+    priceRange,
+    searchTerm
+  });
 
   // Get unique categories
-  const categories = ['all', ...new Set(tours.map(tour => tour.category))];
+  const categories = ['all', ...new Set(toursData?.tours.map(tour => tour.category) || [])];
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    const resultsSection = document.getElementById('tours-results');
+    if (resultsSection) {
+      resultsSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  if (error) {
+    return (
+      <div className="container-custom py-16 text-center">
+        <h2 className="text-2xl font-bold text-red-600 mb-4">Error Loading Tours</h2>
+        <p className="text-gray-600">{error.message}</p>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -85,7 +53,7 @@ const Tours: React.FC = () => {
         subtitle="Discover the best experiences Paris has to offer, from iconic landmarks to hidden gems and local favorites."
       />
       
-      <section className="py-16">
+      <section id="tours-results"  className="py-16">
         <div className="container-custom">
           <div className="flex flex-col md:flex-row justify-between mb-8">
             <h1 className="text-3xl font-display font-bold text-paris-blue-900 mb-4 md:mb-0">
@@ -173,15 +141,38 @@ const Tours: React.FC = () => {
                     <div key={i} className="h-96 bg-gray-200 rounded-lg animate-pulse"></div>
                   ))}
                 </div>
-              ) : filteredTours.length > 0 ? (
+              ) : toursData?.tours.length ? (
                 <>
                   <p className="mb-6 text-gray-600">
-                    Showing {filteredTours.length} tours
+                    Showing {toursData.tours.length} of {toursData.total} tours
                   </p>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredTours.map((tour) => (
+                    {toursData.tours.map((tour) => (
                       <TourCard key={tour.id} tour={tour} />
                     ))}
+                  </div>
+                  
+                  {/* Pagination Controls */}
+                  <div className="flex justify-center items-center mt-8 space-x-2">
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="p-2 rounded-full hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <ChevronLeft size={24} />
+                    </button>
+                    
+                    <span className="text-gray-600">
+                      Page {currentPage} of {toursData.totalPages}
+                    </span>
+                    
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === toursData.totalPages}
+                      className="p-2 rounded-full hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <ChevronRight size={24} />
+                    </button>
                   </div>
                 </>
               ) : (

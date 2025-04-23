@@ -1,33 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
-import { fetchTours } from '../api/toursApi';
 import { TourType } from '../types';
 import TourCard from './TourCard';
 import { ChevronRight } from 'lucide-react';
+import { useFeaturedTours } from '../hooks/useTours';
 
 const FeaturedTours: React.FC = () => {
-  const [tours, setTours] = useState<TourType[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { tours, loading, error } = useFeaturedTours(3);
 
-  useEffect(() => {
-    const loadTours = async () => {
-      try {
-        const allTours = await fetchTours();
-        // Get 3 featured tours with highest ratings
-        const featuredTours = allTours
-          .sort((a, b) => b.rating - a.rating)
-          .slice(0, 3);
-        
-        setTours(featuredTours);
-      } catch (error) {
-        console.error('Error loading featured tours:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadTours();
-  }, []);
+  if (error) {
+    return (
+      <section className="py-16 bg-white">
+        <div className="container-custom">
+          <h2 className="text-3xl font-display font-bold text-paris-blue-900 mb-12 text-center">
+            Featured Paris Experiences
+          </h2>
+          <div className="text-center text-red-600">
+            <p>Error loading featured tours: {error.message}</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   if (loading) {
     return (

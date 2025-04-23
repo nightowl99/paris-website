@@ -10,8 +10,8 @@ interface TourCardProps {
 const TourCard: React.FC<TourCardProps> = ({ tour }) => {
   return (
     <Link to={`/tours/${tour.id}`} className="group">
-      <div className="card h-full flex flex-col overflow-hidden transform transition-all duration-300 group-hover:translate-y-[-5px]">
-        <div className="relative overflow-hidden h-48 sm:h-64">
+      <div className="w-[350px] h-[450px] flex flex-col overflow-hidden transform transition-all duration-300 group-hover:translate-y-[-5px]">
+        <div className="relative overflow-hidden h-[200px]">
           <img 
             src={tour.image} 
             alt={tour.name} 
@@ -33,7 +33,7 @@ const TourCard: React.FC<TourCardProps> = ({ tour }) => {
             </div>
           </div>
           
-          <h3 className="text-xl font-bold text-paris-blue-900 mb-2 group-hover:text-paris-red-500 transition-colors">
+          <h3 className="text-xl font-bold text-paris-blue-900 mb-2 group-hover:text-paris-red-500 transition-colors line-clamp-2">
             {tour.name}
           </h3>
           
