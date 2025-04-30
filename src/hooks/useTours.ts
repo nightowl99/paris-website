@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
-import { fetchTours, TourType } from '../api/toursApi';
+import { fetchTours } from '../api/toursApi';
+import { TourType } from '../types';
 
 interface UseToursOptions {
   page?: number;
@@ -75,11 +76,9 @@ export const useTours = (options: UseToursOptions = {}) => {
         case 'price-high':
           result.sort((a, b) => b.price - a.price);
           break;
-        case 'rating':
-          result.sort((a, b) => b.rating - a.rating);
-          break;
-        default: // popularity (reviews)
-          result.sort((a, b) => b.reviews - a.reviews);
+        default:
+          // No rating or reviews in new schema, so default sorting could be by Id or Name
+          result.sort((a, b) => a.name.localeCompare(b.name));
       }
     }
 
@@ -114,7 +113,6 @@ export const useFeaturedTours = (limit: number = 3) => {
   
   const featuredTours = useMemo(() => {
     return toursData?.tours
-      .sort((a, b) => b.rating - a.rating)
       .slice(0, limit) || [];
   }, [toursData?.tours, limit]);
 

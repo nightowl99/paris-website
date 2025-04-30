@@ -1,19 +1,12 @@
 export interface TourType {
   id: string;
   name: string;
-  description: string;
-  duration: string;
-  price: number;
-  currency: string;
+  affLink: string;
+  thumbnail: string;
   image: string;
-  rating: number;
-  reviews: number;
+  price: number;
+  description: string;
   category: string;
-  location: string;
-  bookingLink: string;
-  highlights: string[];
-  inclusions: string[];
-  exclusions: string[];
 }
 
 export interface AttractionType {

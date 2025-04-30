@@ -53,10 +53,10 @@ const Tours: React.FC = () => {
         subtitle="Discover the best experiences Paris has to offer, from iconic landmarks to hidden gems and local favorites."
       />
       
-      <section id="tours-results"  className="py-16">
+      <section id="tours-results" className="py-16">
         <div className="container-custom">
           <div className="flex flex-col md:flex-row justify-between mb-8">
-            <h1 className="text-3xl font-display font-bold text-paris-blue-900 mb-4 md:mb-0">
+            <h1 className="text-2xl sm:text-3xl font-display font-bold text-paris-blue-900 mb-4 md:mb-0">
               {searchTerm 
                 ? `Search Results for "${searchTerm}"` 
                 : "All Paris Tours & Experiences"}
@@ -64,7 +64,7 @@ const Tours: React.FC = () => {
             
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center md:hidden bg-paris-blue-100 px-4 py-2 rounded"
+              className="flex items-center justify-center md:hidden bg-paris-blue-100 px-4 py-2 rounded w-full sm:w-auto"
             >
               <Filter size={18} className="mr-2" />
               <span>Filters</span>
@@ -74,14 +74,14 @@ const Tours: React.FC = () => {
           
           <div className="flex flex-col md:flex-row gap-8">
             {/* Filters */}
-            <div className={`md:w-1/4 ${showFilters ? 'block' : 'hidden md:block'}`}>
-              <div className="bg-white rounded-lg shadow-md p-6">
+            <div className={`w-full md:w-1/4 ${showFilters ? 'block' : 'hidden md:block'}`}>
+              <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
                 <h3 className="text-lg font-bold text-paris-blue-900 mb-4">Filters</h3>
                 
                 {/* Categories */}
                 <div className="mb-6">
                   <h4 className="font-medium mb-2">Categories</h4>
-                  <div className="space-y-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-1 gap-2">
                     {categories.map((category) => (
                       <button
                         key={category}
@@ -100,10 +100,10 @@ const Tours: React.FC = () => {
                 
                 {/* Price Range */}
                 <div className="mb-6">
-                  <h4 className="font-medium mb-3">Price Range (€)</h4>
+                  <h4 className="font-medium mb-3">Price Range ($)</h4>
                   <div className="flex justify-between mb-2 text-sm">
-                    <span>{priceRange[0]}€</span>
-                    <span>{priceRange[1]}€</span>
+                    <span>{priceRange[0]}$</span>
+                    <span>{priceRange[1]}$</span>
                   </div>
                   <input
                     type="range"
@@ -134,9 +134,9 @@ const Tours: React.FC = () => {
             </div>
             
             {/* Tour Listings */}
-            <div className="md:w-3/4">
+            <div className="w-full md:w-3/4">
               {loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {[1, 2, 3, 4, 5, 6].map((i) => (
                     <div key={i} className="h-96 bg-gray-200 rounded-lg animate-pulse"></div>
                   ))}
@@ -146,33 +146,35 @@ const Tours: React.FC = () => {
                   <p className="mb-6 text-gray-600">
                     Showing {toursData.tours.length} of {toursData.total} tours
                   </p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     {toursData.tours.map((tour) => (
                       <TourCard key={tour.id} tour={tour} />
                     ))}
                   </div>
                   
                   {/* Pagination Controls */}
-                  <div className="flex justify-center items-center mt-8 space-x-2">
-                    <button
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      disabled={currentPage === 1}
-                      className="p-2 rounded-full hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <ChevronLeft size={24} />
-                    </button>
-                    
-                    <span className="text-gray-600">
-                      Page {currentPage} of {toursData.totalPages}
-                    </span>
-                    
-                    <button
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={currentPage === toursData.totalPages}
-                      className="p-2 rounded-full hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <ChevronRight size={24} />
-                    </button>
+                  <div className="flex flex-col sm:flex-row justify-center items-center mt-8 gap-4">
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="p-2 rounded-full hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <ChevronLeft size={24} />
+                      </button>
+                      
+                      <span className="text-gray-600">
+                        Page {currentPage} of {toursData.totalPages}
+                      </span>
+                      
+                      <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === toursData.totalPages}
+                        className="p-2 rounded-full hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <ChevronRight size={24} />
+                      </button>
+                    </div>
                   </div>
                 </>
               ) : (
