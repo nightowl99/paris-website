@@ -11,7 +11,6 @@ const TourDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const [tour, setTour] = useState<TourType | null>(null)
   const [loading, setLoading] = useState(true)
-  const [selectedDate, setSelectedDate] = useState<string>("")
   const [participants, setParticipants] = useState(2)
 
   useEffect(() => {
@@ -132,26 +131,6 @@ const TourDetails: React.FC = () => {
                 <div className="space-y-4 mb-6">
                   <div>
                     <label className="block text-gray-700 font-medium mb-2">
-                      <Calendar size={18} className="inline mr-2" />
-                      Select Date
-                    </label>
-                    <select
-                      value={selectedDate}
-                      onChange={(e) => setSelectedDate(e.target.value)}
-                      className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-paris-blue-500"
-                      required
-                    >
-                      <option value="">Select a date</option>
-                      {availableDates.map((date) => (
-                        <option key={date.value} value={date.value}>
-                          {date.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-gray-700 font-medium mb-2">
                       <Users size={18} className="inline mr-2" />
                       Number of Participants
                     </label>
@@ -184,18 +163,10 @@ const TourDetails: React.FC = () => {
                   href={tour.affLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`block w-full py-3 rounded-md font-medium text-center transition-colors ${
-                    selectedDate
-                      ? "bg-paris-gold-500 hover:bg-paris-gold-600 text-paris-blue-900"
-                      : "bg-gray-300 cursor-not-allowed text-gray-600 pointer-events-none"
-                  }`}
+                  className="block w-full py-3 rounded-md font-medium text-center transition-colors bg-paris-gold-500 hover:bg-paris-gold-600 text-paris-blue-900"
                 >
                   Book Now
                 </a>
-
-                <p className="text-center text-sm text-gray-500 mt-4">
-                  You will be redirected to our partner site to complete your booking.
-                </p>
               </div>
             </div>
           </div>

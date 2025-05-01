@@ -21,7 +21,15 @@ export const useTours = (options: UseToursOptions = {}) => {
     searchTerm
   } = options;
 
-  const [allTours, setAllTours] = useState<TourType[]>([]);
+  const [toursData, setToursData] = useState<{
+    tours: TourType[];
+    total: number;
+    totalPages: number;
+  }>({
+    tours: [],
+    total: 0,
+    totalPages: 0
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -30,21 +38,24 @@ export const useTours = (options: UseToursOptions = {}) => {
       try {
         setLoading(true);
         setError(null);
-        const data = await fetchTours();
-        setAllTours(data.tours);
+        const data = await fetchTours(page, pageSize, category);
+        setToursData({
+          tours: data.tours,
+          total: data.total,
+          totalPages: data.totalPages
+        });
       } catch (err) {
         setError(err instanceof Error ? err : new Error('Failed to fetch tours'));
-        setAllTours([]);
       } finally {
         setLoading(false);
       }
     };
 
     loadTours();
-  }, []);
+  }, [page, pageSize, category]);
 
   const filteredTours = useMemo(() => {
-    let result = [...allTours];
+    let result = [...toursData.tours];
 
     // Filter by search term
     if (searchTerm) {
@@ -83,7 +94,7 @@ export const useTours = (options: UseToursOptions = {}) => {
     }
 
     return result;
-  }, [allTours, searchTerm, category, sortBy, priceRange]);
+  }, [toursData.tours, searchTerm, category, sortBy, priceRange]);
 
   // Calculate pagination
   const total = filteredTours.length;
@@ -93,13 +104,9 @@ export const useTours = (options: UseToursOptions = {}) => {
   const paginatedTours = filteredTours.slice(startIndex, endIndex);
 
   return {
-    toursData: {
-      tours: paginatedTours,
-      total,
-      page,
-      pageSize,
-      totalPages
-    },
+    tours: paginatedTours,
+    total: toursData.total,
+    totalPages: toursData.totalPages,
     loading,
     error,
     currentPage: page,
@@ -109,12 +116,12 @@ export const useTours = (options: UseToursOptions = {}) => {
 
 // Helper hook for featured tours
 export const useFeaturedTours = (limit: number = 3) => {
-  const { toursData, loading, error } = useTours({ pageSize: 1000 });
+  const { tours, loading, error } = useTours({ pageSize: 1000 });
   
   const featuredTours = useMemo(() => {
-    return toursData?.tours
+    return tours
       .slice(0, limit) || [];
-  }, [toursData?.tours, limit]);
+  }, [tours, limit]);
 
   return {
     tours: featuredTours,

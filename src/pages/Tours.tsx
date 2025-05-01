@@ -4,6 +4,7 @@ import TourCard from '../components/TourCard';
 import HeroSection from '../components/HeroSection';
 import { Filter, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTours } from '../hooks/useTours';
+import { useCategories } from '../hooks/useCategories';
 
 const Tours: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -16,7 +17,7 @@ const Tours: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 12;
 
-  const { toursData, loading, error } = useTours({
+  const { tours, total: totalTours, totalPages, loading: toursLoading, error: toursError } = useTours({
     page: currentPage,
     pageSize,
     category: activeCategory !== 'all' ? activeCategory : undefined,
@@ -25,8 +26,13 @@ const Tours: React.FC = () => {
     searchTerm
   });
 
-  // Get unique categories
-  const categories = ['all', ...new Set(toursData?.tours.map(tour => tour.category) || [])];
+  const { categories, loading: categoriesLoading, error: categoriesError } = useCategories();
+
+  // Combine all categories with 'all' option
+  const allCategories = [
+    { id: 0, name: 'All Categories', slug: 'all' },
+    ...(categories || [])
+  ];
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
@@ -36,11 +42,11 @@ const Tours: React.FC = () => {
     }
   };
 
-  if (error) {
+  if (toursError || categoriesError) {
     return (
       <div className="container-custom py-16 text-center">
-        <h2 className="text-2xl font-bold text-red-600 mb-4">Error Loading Tours</h2>
-        <p className="text-gray-600">{error.message}</p>
+        <h2 className="text-2xl font-bold text-red-600 mb-4">Error Loading Content</h2>
+        <p className="text-gray-600">{toursError?.message || categoriesError?.message}</p>
       </div>
     );
   }
@@ -82,19 +88,23 @@ const Tours: React.FC = () => {
                 <div className="mb-6">
                   <h4 className="font-medium mb-2">Categories</h4>
                   <div className="grid grid-cols-2 sm:grid-cols-1 gap-2">
-                    {categories.map((category) => (
-                      <button
-                        key={category}
-                        onClick={() => setActiveCategory(category)}
-                        className={`block w-full text-left px-3 py-2 rounded transition-colors ${
-                          activeCategory === category
-                            ? 'bg-paris-blue-100 text-paris-blue-800 font-medium'
-                            : 'hover:bg-gray-100'
-                        }`}
-                      >
-                        {category === 'all' ? 'All Categories' : category}
-                      </button>
-                    ))}
+                    {categoriesLoading ? (
+                      <div className="animate-pulse h-8 bg-gray-200 rounded"></div>
+                    ) : (
+                      allCategories.map((category) => (
+                        <button
+                          key={category.id}
+                          onClick={() => setActiveCategory(category.name)}
+                          className={`block w-full text-left px-3 py-2 rounded transition-colors ${
+                            activeCategory === category.name
+                              ? 'bg-paris-blue-100 text-paris-blue-800 font-medium'
+                              : 'hover:bg-gray-100'
+                          }`}
+                        >
+                          {category.name}
+                        </button>
+                      ))
+                    )}
                   </div>
                 </div>
                 
@@ -135,19 +145,18 @@ const Tours: React.FC = () => {
             
             {/* Tour Listings */}
             <div className="w-full md:w-3/4">
-              {loading ? (
+              {toursLoading ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {[1, 2, 3, 4, 5, 6].map((i) => (
                     <div key={i} className="h-96 bg-gray-200 rounded-lg animate-pulse"></div>
                   ))}
                 </div>
-              ) : toursData?.tours.length ? (
+              ) : tours?.length ? (
                 <>
-                  <p className="mb-6 text-gray-600">
-                    Showing {toursData.tours.length} of {toursData.total} tours
-                  </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                    {toursData.tours.map((tour) => (
+                    {tours
+                    .filter((tour) => tour.category === activeCategory || activeCategory === 'all')
+                    .map((tour) => (
                       <TourCard key={tour.id} tour={tour} />
                     ))}
                   </div>
@@ -164,12 +173,12 @@ const Tours: React.FC = () => {
                       </button>
                       
                       <span className="text-gray-600">
-                        Page {currentPage} of {toursData.totalPages}
+                        Page {currentPage} of {totalPages}
                       </span>
                       
                       <button
                         onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={currentPage === toursData.totalPages}
+                        disabled={currentPage === totalPages}
                         className="p-2 rounded-full hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <ChevronRight size={24} />
