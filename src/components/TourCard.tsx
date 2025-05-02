@@ -1,6 +1,6 @@
 import type React from "react"
 import { Link } from "react-router-dom"
-import { DollarSign, Euro, Search } from "lucide-react"
+import { DollarSign, Search } from "lucide-react"
 import type { TourType } from "../types"
 
 interface TourCardProps {

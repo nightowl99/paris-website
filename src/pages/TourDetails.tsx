@@ -5,13 +5,12 @@ import { useState, useEffect } from "react"
 import { useParams, Link } from "react-router-dom"
 import { getTourById } from "../api/toursApi"
 import type { TourType } from "../types"
-import { MapPin, Calendar, Users, ChevronLeft } from "lucide-react"
+import { MapPin, ChevronLeft } from "lucide-react"
 
 const TourDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const [tour, setTour] = useState<TourType | null>(null)
   const [loading, setLoading] = useState(true)
-  const [participants, setParticipants] = useState(2)
 
   useEffect(() => {
     const loadTour = async () => {
@@ -120,23 +119,12 @@ const TourDetails: React.FC = () => {
               </div>
             </div>
 
-            {/* Booking Panl */}
+            {/* Booking Panel */}
             <div className="lg:w-1/3">
               <div className="bg-white rounded-lg shadow-md p-6 sticky top-24">
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-xl font-display font-bold text-paris-blue-900">Book this Tour</h3>
                   <div className="text-2xl font-bold text-paris-blue-900">${tour.price.toFixed(2)}</div>
-                </div>
-
-                <div className="border-t border-gray-200 pt-4 mb-6">
-                  <div className="flex justify-between mb-2">
-                    <span>Price per person</span>
-                    <span>${tour.price.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between font-bold text-lg text-paris-blue-900">
-                    <span>Total Price</span>
-                    <span>${(tour.price * participants).toFixed(2)}</span>
-                  </div>
                 </div>
 
                 <a
