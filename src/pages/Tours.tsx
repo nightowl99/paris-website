@@ -2,29 +2,35 @@ import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import TourCard from '../components/TourCard';
 import HeroSection from '../components/HeroSection';
-import { Filter, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Filter, ChevronDown } from 'lucide-react';
 import { useTours } from '../hooks/useTours';
 import { useCategories } from '../hooks/useCategories';
+import PaginationControls from '../components/PaginationControls';
 
 const Tours: React.FC = () => {
   const [searchParams] = useSearchParams();
   const searchTerm = searchParams.get('search') || '';
   
+  const currentPage = parseInt(searchParams.get('page') || '1');
+  const pageSize = 12;
+  
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('popularity');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
   const [showFilters, setShowFilters] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 12;
+  const [isPriceFilterEnabled, setIsPriceFilterEnabled] = useState(false);
 
-  const { tours, total: totalTours, totalPages, loading: toursLoading, error: toursError } = useTours({
-    page: currentPage,
-    pageSize,
+  const { tours, totalPages, loading: toursLoading, error: toursError } = useTours({
+    start: currentPage,
+    end: pageSize,
     category: activeCategory !== 'all' ? activeCategory : undefined,
     sortBy,
-    priceRange,
+    priceRange: isPriceFilterEnabled ? priceRange : undefined,
     searchTerm
   });
+
+  console.log('Tours:', tours);
+  console.log('Total Pages:', totalPages);
 
   const { categories, loading: categoriesLoading, error: categoriesError } = useCategories();
 
@@ -33,14 +39,6 @@ const Tours: React.FC = () => {
     { id: 0, name: 'All Categories', slug: 'all' },
     ...(categories || [])
   ];
-
-  const handlePageChange = (newPage: number) => {
-    setCurrentPage(newPage);
-    const resultsSection = document.getElementById('tours-results');
-    if (resultsSection) {
-      resultsSection.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
 
   if (toursError || categoriesError) {
     return (
@@ -108,22 +106,37 @@ const Tours: React.FC = () => {
                   </div>
                 </div>
                 
-                {/* Price Range */}
-                <div className="mb-6">
-                  <h4 className="font-medium mb-3">Price Range ($)</h4>
-                  <div className="flex justify-between mb-2 text-sm">
-                    <span>{priceRange[0]}$</span>
-                    <span>{priceRange[1]}$</span>
+                                {/* Price Range */}
+                                <div className="mb-6">
+                  <div className="flex items-center mb-3">
+                    <input
+                      type="checkbox"
+                      id="enablePriceFilter"
+                      checked={isPriceFilterEnabled}
+                      onChange={(e) => setIsPriceFilterEnabled(e.target.checked)}
+                      className="mr-2"
+                    />
+                    <label htmlFor="enablePriceFilter" className="font-medium">
+                      Price Range ($)
+                    </label>
                   </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="1000"
-                    step="10"
-                    value={priceRange[1]}
-                    onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
-                    className="w-full"
-                  />
+                  {isPriceFilterEnabled && (
+                    <>
+                      <div className="flex justify-between mb-2 text-sm">
+                        <span>{priceRange[0]}$</span>
+                        <span>{priceRange[1]}$</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="1000"
+                        step="10"
+                        value={priceRange[1]}
+                        onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
+                        className="w-full"
+                      />
+                    </>
+                  )}
                 </div>
                 
                 {/* Sort By */}
@@ -161,30 +174,11 @@ const Tours: React.FC = () => {
                     ))}
                   </div>
                   
-                  {/* Pagination Controls */}
-                  <div className="flex flex-col sm:flex-row justify-center items-center mt-8 gap-4">
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => handlePageChange(currentPage - 1)}
-                        disabled={currentPage === 1}
-                        className="p-2 rounded-full hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <ChevronLeft size={24} />
-                      </button>
-                      
-                      <span className="text-gray-600">
-                        Page {currentPage} of {totalPages}
-                      </span>
-                      
-                      <button
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={currentPage === totalPages}
-                        className="p-2 rounded-full hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <ChevronRight size={24} />
-                      </button>
-                    </div>
-                  </div>
+                  <PaginationControls
+                    hasNextPage={currentPage < totalPages}
+                    hasPreviousPage={currentPage > 1}
+                    totalPages={totalPages}
+                  />
                 </>
               ) : (
                 <div className="text-center py-16">

@@ -1,55 +1,56 @@
+import { TourType } from "../types";
 import { createClient } from '@supabase/supabase-js';
-import { TourType } from '../types';
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
   import.meta.env.VITE_SUPABASE_ANON_KEY
 );
 
-// Function to fetch and parse the CSV data
 export type PaginatedTours = {
   tours: TourType[];
-  total: number;
-  page: number;
-  pageSize: number;
   totalPages: number;
 };
 
-// Function to fetch tours with proper pagination
 export const fetchTours = async (
-  page: number = 1,
-  pageSize: number = 12,
-  category?: string
+  start: number = 0,
+  end: number = 12,
+  category?: string,
+  minPrice?: number,
+  maxPrice?: number,
+  searchTerm?: string
 ): Promise<PaginatedTours> => {
   try {
     console.log('Fetching tours from Supabase with pagination');
-    
-    // Calculate the range for pagination
-    const from = (page - 1) * pageSize;
-    const to = from + pageSize - 1;
 
-    // Build the query
-    let query = supabase
-      .from('new_tours')
-      .select('*', { count: 'exact' });
+    const params = new URLSearchParams({
+      start: String(start),
+      end: String(end),
+    });
 
-    // Add category filter if provided
-    if (category) {
-      query = query.eq('category', category);
-    }
+    if (category) params.append('category', category);
+    if (minPrice !== undefined) params.append('minPrice', String(minPrice));
+    if (maxPrice !== undefined) params.append('maxPrice', String(maxPrice));
+    if (searchTerm) params.append('searchTerm', searchTerm);
 
-    // Add range for pagination
-    const { data: tours, error, count } = await query
-      .range(from, to)
-      .order('name');
+    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/paginate-tours?${params.toString()}`;
 
-    if (error) {
-      throw error;
-    }
+    console.log('Params:', params.toString());
 
-    const formattedTours: TourType[] = (tours || [])
-      .filter((item) => item.id && item.name)
-      .map((item) => ({
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) throw new Error(`Request failed: ${response.status}`);
+
+    const result = await response.json();
+
+    const formattedTours: TourType[] = (result.data || [])
+      .filter((item: any) => item.id && item.name)
+      .map((item: any) => ({
         id: item.id,
         name: item.name,
         affLink: item.affLink || '',
@@ -60,30 +61,16 @@ export const fetchTours = async (
         category: item.category || 'Uncategorized',
       }));
 
-    // Calculate total pages
-    const totalCount = count || formattedTours.length;
-    const totalPages = Math.ceil(totalCount / pageSize);
-
-    console.log('Pagination info:', {
-      page,
-      pageSize,
-      total: totalCount,
-      totalPages
-    });
+    console.log('Formatted tours:', formattedTours);
 
     return {
       tours: formattedTours,
-      total: totalCount,
-      page,
-      pageSize,
-      totalPages
+      totalPages: result.totalPages || 1
     };
 
   } catch (error) {
     console.error('Error fetching tour data:', error);
     throw new Error('Failed to fetch tours data');
-  } finally {
-    console.log('Fetching tours from Supabase completed');
   }
 };
 
