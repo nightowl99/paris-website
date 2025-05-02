@@ -32,29 +32,6 @@ const TourDetails: React.FC = () => {
     loadTour()
   }, [id])
 
-  // Generate available dates (next 30 days)
-  const getAvailableDates = () => {
-    const dates = []
-    const today = new Date()
-
-    for (let i = 1; i <= 30; i++) {
-      const date = new Date(today)
-      date.setDate(today.getDate() + i)
-      dates.push({
-        value: date.toISOString().split("T")[0],
-        label: date.toLocaleDateString("en-US", {
-          weekday: "short",
-          month: "short",
-          day: "numeric",
-        }),
-      })
-    }
-
-    return dates
-  }
-
-  const availableDates = getAvailableDates()
-
   if (loading) {
     return (
       <div className="pt-32 pb-16">

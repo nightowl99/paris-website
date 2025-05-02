@@ -15,7 +15,7 @@ const Tours: React.FC = () => {
   const pageSize = 12;
   
   const [activeCategory, setActiveCategory] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<string>('popularity');
+  const [sortBy, setSortBy] = useState<string>('price-low');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
   const [showFilters, setShowFilters] = useState(false);
   const [isPriceFilterEnabled, setIsPriceFilterEnabled] = useState(false);
@@ -147,8 +147,6 @@ const Tours: React.FC = () => {
                     onChange={(e) => setSortBy(e.target.value)}
                     className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-paris-blue-500"
                   >
-                    <option value="popularity">Popularity</option>
-                    <option value="rating">Rating</option>
                     <option value="price-low">Price: Low to High</option>
                     <option value="price-high">Price: High to Low</option>
                   </select>
