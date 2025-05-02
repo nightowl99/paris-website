@@ -128,26 +128,6 @@ const TourDetails: React.FC = () => {
                   <div className="text-2xl font-bold text-paris-blue-900">${tour.price.toFixed(2)}</div>
                 </div>
 
-                <div className="space-y-4 mb-6">
-                  <div>
-                    <label className="block text-gray-700 font-medium mb-2">
-                      <Users size={18} className="inline mr-2" />
-                      Number of Participants
-                    </label>
-                    <select
-                      value={participants}
-                      onChange={(e) => setParticipants(Number.parseInt(e.target.value))}
-                      className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-paris-blue-500"
-                    >
-                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
-                        <option key={num} value={num}>
-                          {num} {num === 1 ? "person" : "people"}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
                 <div className="border-t border-gray-200 pt-4 mb-6">
                   <div className="flex justify-between mb-2">
                     <span>Price per person</span>
