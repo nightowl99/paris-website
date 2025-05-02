@@ -2,45 +2,49 @@ import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import TourCard from '../components/TourCard';
 import HeroSection from '../components/HeroSection';
-import { Filter, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Filter, ChevronDown } from 'lucide-react';
 import { useTours } from '../hooks/useTours';
+import { useCategories } from '../hooks/useCategories';
+import PaginationControls from '../components/PaginationControls';
 
 const Tours: React.FC = () => {
   const [searchParams] = useSearchParams();
   const searchTerm = searchParams.get('search') || '';
   
+  const currentPage = parseInt(searchParams.get('page') || '1');
+  const pageSize = 12;
+  
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('popularity');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
   const [showFilters, setShowFilters] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 12;
+  const [isPriceFilterEnabled, setIsPriceFilterEnabled] = useState(false);
 
-  const { toursData, loading, error } = useTours({
-    page: currentPage,
-    pageSize,
+  const { tours, totalPages, loading: toursLoading, error: toursError } = useTours({
+    start: currentPage,
+    end: pageSize,
     category: activeCategory !== 'all' ? activeCategory : undefined,
     sortBy,
-    priceRange,
+    priceRange: isPriceFilterEnabled ? priceRange : undefined,
     searchTerm
   });
 
-  // Get unique categories
-  const categories = ['all', ...new Set(toursData?.tours.map(tour => tour.category) || [])];
+  console.log('Tours:', tours);
+  console.log('Total Pages:', totalPages);
 
-  const handlePageChange = (newPage: number) => {
-    setCurrentPage(newPage);
-    const resultsSection = document.getElementById('tours-results');
-    if (resultsSection) {
-      resultsSection.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
+  const { categories, loading: categoriesLoading, error: categoriesError } = useCategories();
 
-  if (error) {
+  // Combine all categories with 'all' option
+  const allCategories = [
+    { id: 0, name: 'All Categories', slug: 'all' },
+    ...(categories || [])
+  ];
+
+  if (toursError || categoriesError) {
     return (
       <div className="container-custom py-16 text-center">
-        <h2 className="text-2xl font-bold text-red-600 mb-4">Error Loading Tours</h2>
-        <p className="text-gray-600">{error.message}</p>
+        <h2 className="text-2xl font-bold text-red-600 mb-4">Error Loading Content</h2>
+        <p className="text-gray-600">{toursError?.message || categoriesError?.message}</p>
       </div>
     );
   }
@@ -82,38 +86,57 @@ const Tours: React.FC = () => {
                 <div className="mb-6">
                   <h4 className="font-medium mb-2">Categories</h4>
                   <div className="grid grid-cols-2 sm:grid-cols-1 gap-2">
-                    {categories.map((category) => (
-                      <button
-                        key={category}
-                        onClick={() => setActiveCategory(category)}
-                        className={`block w-full text-left px-3 py-2 rounded transition-colors ${
-                          activeCategory === category
-                            ? 'bg-paris-blue-100 text-paris-blue-800 font-medium'
-                            : 'hover:bg-gray-100'
-                        }`}
-                      >
-                        {category === 'all' ? 'All Categories' : category}
-                      </button>
-                    ))}
+                    {categoriesLoading ? (
+                      <div className="animate-pulse h-8 bg-gray-200 rounded"></div>
+                    ) : (
+                      allCategories.map((category) => (
+                        <button
+                          key={category.id}
+                          onClick={() => setActiveCategory(category.name)}
+                          className={`block w-full text-left px-3 py-2 rounded transition-colors ${
+                            activeCategory === category.name
+                              ? 'bg-paris-blue-100 text-paris-blue-800 font-medium'
+                              : 'hover:bg-gray-100'
+                          }`}
+                        >
+                          {category.name}
+                        </button>
+                      ))
+                    )}
                   </div>
                 </div>
                 
-                {/* Price Range */}
-                <div className="mb-6">
-                  <h4 className="font-medium mb-3">Price Range ($)</h4>
-                  <div className="flex justify-between mb-2 text-sm">
-                    <span>{priceRange[0]}$</span>
-                    <span>{priceRange[1]}$</span>
+                                {/* Price Range */}
+                                <div className="mb-6">
+                  <div className="flex items-center mb-3">
+                    <input
+                      type="checkbox"
+                      id="enablePriceFilter"
+                      checked={isPriceFilterEnabled}
+                      onChange={(e) => setIsPriceFilterEnabled(e.target.checked)}
+                      className="mr-2"
+                    />
+                    <label htmlFor="enablePriceFilter" className="font-medium">
+                      Price Range ($)
+                    </label>
                   </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="1000"
-                    step="10"
-                    value={priceRange[1]}
-                    onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
-                    className="w-full"
-                  />
+                  {isPriceFilterEnabled && (
+                    <>
+                      <div className="flex justify-between mb-2 text-sm">
+                        <span>{priceRange[0]}$</span>
+                        <span>{priceRange[1]}$</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="1000"
+                        step="10"
+                        value={priceRange[1]}
+                        onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
+                        className="w-full"
+                      />
+                    </>
+                  )}
                 </div>
                 
                 {/* Sort By */}
@@ -135,47 +158,27 @@ const Tours: React.FC = () => {
             
             {/* Tour Listings */}
             <div className="w-full md:w-3/4">
-              {loading ? (
+              {toursLoading ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {[1, 2, 3, 4, 5, 6].map((i) => (
                     <div key={i} className="h-96 bg-gray-200 rounded-lg animate-pulse"></div>
                   ))}
                 </div>
-              ) : toursData?.tours.length ? (
+              ) : tours?.length ? (
                 <>
-                  <p className="mb-6 text-gray-600">
-                    Showing {toursData.tours.length} of {toursData.total} tours
-                  </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                    {toursData.tours.map((tour) => (
+                    {tours
+                    .filter((tour) => tour.category === activeCategory || activeCategory === 'all')
+                    .map((tour) => (
                       <TourCard key={tour.id} tour={tour} />
                     ))}
                   </div>
                   
-                  {/* Pagination Controls */}
-                  <div className="flex flex-col sm:flex-row justify-center items-center mt-8 gap-4">
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => handlePageChange(currentPage - 1)}
-                        disabled={currentPage === 1}
-                        className="p-2 rounded-full hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <ChevronLeft size={24} />
-                      </button>
-                      
-                      <span className="text-gray-600">
-                        Page {currentPage} of {toursData.totalPages}
-                      </span>
-                      
-                      <button
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={currentPage === toursData.totalPages}
-                        className="p-2 rounded-full hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <ChevronRight size={24} />
-                      </button>
-                    </div>
-                  </div>
+                  <PaginationControls
+                    hasNextPage={currentPage < totalPages}
+                    hasPreviousPage={currentPage > 1}
+                    totalPages={totalPages}
+                  />
                 </>
               ) : (
                 <div className="text-center py-16">

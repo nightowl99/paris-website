@@ -1,6 +1,6 @@
 import type React from "react"
 import { Link } from "react-router-dom"
-import { Euro, Search } from "lucide-react"
+import { DollarSign, Euro, Search } from "lucide-react"
 import type { TourType } from "../types"
 
 interface TourCardProps {
@@ -36,7 +36,7 @@ const TourCard: React.FC<TourCardProps> = ({ tour }) => {
               <Search size={16} className="mr-1" /> {tour.category}
             </div>
             <div className="font-bold text-paris-blue-900 flex items-center">
-              <Euro size={16} className="mr-1" />
+              <DollarSign size={16} className="mr-1" />
               {tour.price.toFixed(2)}
             </div>
           </div>

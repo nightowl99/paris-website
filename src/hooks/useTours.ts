@@ -2,119 +2,96 @@ import { useState, useEffect, useMemo } from 'react';
 import { fetchTours } from '../api/toursApi';
 import { TourType } from '../types';
 
+// Interface defining the optional parameters for the useTours hook
 interface UseToursOptions {
-  page?: number;
-  pageSize?: number;
-  category?: string;
-  sortBy?: string;
-  priceRange?: [number, number];
-  searchTerm?: string;
+  start?: number;          // Current page number for pagination
+  end?: number;      // Number of items per page
+  category?: string;      // Tour category filter
+  sortBy?: string;        // Sorting criteria
+  priceRange?: [number, number];  // Min and max price range filter
+  searchTerm?: string;    // Search text filter
 }
 
+interface ToursData {
+  tours: TourType[];
+  totalPages: number;
+}
+
+// Main hook for fetching and managing tours data with filtering and pagination
 export const useTours = (options: UseToursOptions = {}) => {
+  // Destructure options with default values
   const {
-    page = 1,
-    pageSize = 12,
+    start = 0,
+    end = 12,
     category,
     sortBy,
     priceRange,
     searchTerm
   } = options;
 
-  const [allTours, setAllTours] = useState<TourType[]>([]);
+  // State for storing tours data, loading state, and error handling
+  const [toursData, setToursData] = useState<ToursData>({
+    tours: [],
+    totalPages: 0
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
+  // Effect hook to fetch tours when dependencies change
   useEffect(() => {
     const loadTours = async () => {
       try {
         setLoading(true);
         setError(null);
-        const data = await fetchTours();
-        setAllTours(data.tours);
+        const {
+          tours,
+          totalPages
+        } = await fetchTours(
+          start,
+          end,
+          category,
+          priceRange?.[0],
+          priceRange?.[1],
+          searchTerm
+        );
+
+        console.log('Hook Tours:', tours);
+        console.log('Hook Total Pages:', totalPages);
+        setToursData({
+          tours: tours,
+          totalPages: totalPages
+        });
       } catch (err) {
         setError(err instanceof Error ? err : new Error('Failed to fetch tours'));
-        setAllTours([]);
       } finally {
         setLoading(false);
       }
     };
 
     loadTours();
-  }, []);
+  }, [start, end, category]);  // Re-fetch when these values change
 
-  const filteredTours = useMemo(() => {
-    let result = [...allTours];
-
-    // Filter by search term
-    if (searchTerm) {
-      result = result.filter(tour => 
-        tour.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        tour.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        tour.category.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    // Filter by category
-    if (category && category !== 'all') {
-      result = result.filter(tour => tour.category === category);
-    }
-
-    // Filter by price range
-    if (priceRange) {
-      result = result.filter(tour => 
-        tour.price >= priceRange[0] && tour.price <= priceRange[1]
-      );
-    }
-
-    // Sort tours
-    if (sortBy) {
-      switch (sortBy) {
-        case 'price-low':
-          result.sort((a, b) => a.price - b.price);
-          break;
-        case 'price-high':
-          result.sort((a, b) => b.price - a.price);
-          break;
-        default:
-          // No rating or reviews in new schema, so default sorting could be by Id or Name
-          result.sort((a, b) => a.name.localeCompare(b.name));
-      }
-    }
-
-    return result;
-  }, [allTours, searchTerm, category, sortBy, priceRange]);
-
-  // Calculate pagination
-  const total = filteredTours.length;
-  const totalPages = Math.ceil(total / pageSize);
-  const startIndex = (page - 1) * pageSize;
-  const endIndex = startIndex + pageSize;
-  const paginatedTours = filteredTours.slice(startIndex, endIndex);
-
+  // Return all necessary data and state for the component
   return {
-    toursData: {
-      tours: paginatedTours,
-      total,
-      page,
-      pageSize,
-      totalPages
-    },
+    tours: toursData.tours,
+    totalPages: toursData.totalPages,
     loading,
     error,
-    currentPage: page,
-    pageSize
+    currentPage: start,
+    pageSize: end
   };
 };
 
-// Helper hook for featured tours
+// Helper hook specifically for fetching featured tours
 export const useFeaturedTours = (limit: number = 3) => {
-  const { toursData, loading, error } = useTours({ pageSize: 1000 });
+  // Use main tours hook with large page size to get all tours
+  const { tours, loading, error } = useTours({ end: 1000 });
   
+  // Memoize the featured tours selection
   const featuredTours = useMemo(() => {
-    return toursData?.tours
+    return tours
       .slice(0, limit) || [];
-  }, [toursData?.tours, limit]);
+  }, [tours, limit]);
 
   return {
     tours: featuredTours,
